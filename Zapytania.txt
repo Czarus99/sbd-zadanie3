@@ -1,3 +1,4 @@
+Select
 SELECT * FROM `customers` WHERE country='Germany';
 SELECT * FROM `customers` WHERE city='Berlin';
 SELECT * FROM `customers` WHERE country='Germany' AND city='Berlin';
@@ -7,6 +8,7 @@ SELECT * FROM `customers` ORDER BY country ASC;
 SELECT * FROM `customers` ORDER BY country DESC;
 SELECT * FROM `customers` ORDER BY country DESC, customer_name ASC;
 
+Min/Max
 SELECT MIN(price) FROM products;
 SELECT MAX(price) FROM products;
 SELECT COUNT(*) FROM products;
@@ -16,6 +18,7 @@ SELECT COUNT(*), AVG(price) FROM products WHERE category_id=1;
 SELECT SUM(price) FROM products WHERE category_id=2;
 SELECT MAX(price) FROM products WHERE category_id=1 OR category_id=2 group by category_id;
 
+Beetween
 SELECT * FROM `products` WHERE `price` BETWEEN 10 AND 20;
 SELECT * FROM `products` WHERE `price` NOT BETWEEN 10 AND 20;
 SELECT * FROM `products` WHERE `category_id` IN (1, 2, 3);
@@ -23,12 +26,25 @@ SELECT * FROM `orders` WHERE `shipper_id` IN (1, 2, 3);
 SELECT * FROM `products` WHERE `price` BETWEEN 10 AND 15 AND NOT `category_id` IN (1, 2, 3, 4);
 SELECT * FROM `orders` WHERE `order_date` BETWEEN '1996-7-01 00:00:00' AND '1996-7-31 00:00:00';
 SELECT * FROM `orders` WHERE `customer_id` IN (SELECT `id` FROM `customers` WHERE `id` BETWEEN 77 AND 90);
+Join
+SELECT *
+FROM customers
+INNER JOIN orders ON customers.customer_id = orders.customer_id;
 
+SELECT customers.*
+FROM customers
+INNER JOIN orders ON customers.customer_id = orders.customer_id;
 
+SELECT c1.*, c2.*
+FROM customers c1
+INNER JOIN customers c2 ON c1.city = c2.city
+WHERE c1.customer_id < c2.customer_id;
 
+Offset,limit
 SELECT * FROM `orders` LIMIT 10 OFFSET 10;
 SELECT * FROM `orders` ORDER BY ID DESC LIMIT 10;
 
+Having, exist
 SELECT COUNT(`id`), `country` FROM customers GROUP BY `country` HAVING COUNT(`id`) > 5;
 SELECT c.customer_name, COUNT(c.id) FROM `customers` as c JOIN orders as o ON o.customer_id = c.id GROUP By c.id HAVING COUNT(c.id) > 2 and COUNT(c.id) < 4;
 SELECT e.first_name, e.last_name, COUNT(o.id) FROM `employees` as e JOIN orders as o ON o.employee_id = e.id GROUP By e.id HAVING COUNT(o.id) > 10;
@@ -36,9 +52,31 @@ SELECT e.last_name, EXISTS(SELECT COUNT(o.id) FROM orders as o WHERE o.employee_
 SELECT `s.id`, `s.name`, `s.contact_name`, `s.address`, `s.city`, `s.post_code`, `s.country`, `s.phone` FROM `suppliers` as s WHERE EXISTS( SELECT p.id FROM products as p WHERE p.price < 20 AND p.supplier_id = s.id );
 SELECT `s.id`, `s.name`, `s.contact_name`, `s.address`, `s.city`, `s.post_code`, `s.country`, `s.phone` FROM `suppliers` as s WHERE EXISTS( SELECT p.id FROM products as p WHERE p.price = 22 AND p.supplier_id = s.id );
 
-SELECT o.id, o.quantity,
-CASE WHEN o.quantity > 30 THEN 'Liczba sztuk jest większa niż 30' WHEN o.quantity < 30 THEN 'Liczba sztuk jest mniejsza niż 30' ELSE 'Liczba sztuk jest równa 30' END AS ilosc FROM orders_details as o;
-SELECT c.customer_name, c.city, c.country FROM customers as c ORDER BY CASE WHEN c.city = NULL THEN c.country ELSE c.city END;
 
+DISTINC
 SELECT DISTINCT(`country`) FROM `customers` WHERE 1;
 SELECT COUNT(zliczanie.powtorzenie) FROM (SELECT DISTINCT(`country`) as powtorzenie FROM `customers` GROUP BY country HAVING COUNT(`country`) = 1) as zliczanie
+
+Any all
+SELECT * FROM products WHERE id IN (SELECT product_id FROM orders WHERE quantity = 10);
+SELECT * FROM products WHERE id IN (SELECT product_id FROM orders WHERE quantity > 99);
+SELECT * FROM products WHERE name IS NOT NULL;
+SELECT * FROM products WHERE id IN (SELECT product_id FROM orders WHERE quantity = 10 GROUP BY product_id HAVING COUNT(*) = 1);
+
+
+CASE
+SELECT nazwa_produktu, liczba_sztuk,
+    CASE
+        WHEN liczba_sztuk > 30 THEN 'Liczba sztuk jest większa niż 30'
+        WHEN liczba_sztuk = 30 THEN 'Liczba sztuk jest równa 30'
+        ELSE 'Liczba sztuk jest mniejsza niż 30'
+    END AS 'status_liczby_sztuk'
+FROM produkty
+
+SELECT nazwisko_klienta, miasto, kraj
+FROM klienci
+ORDER BY
+    CASE
+        WHEN miasto IS NULL THEN kraj
+        ELSE miasto
+    END ASC
